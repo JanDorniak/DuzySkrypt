@@ -21,6 +21,8 @@
 INPUT=/tmp/input.sh.$$
 INPUT2=/tmp/input2.sh.$$
 
+#find . -not -path '*/\.*' -type f
+
 OPCJEMENU=(1 "Wypakuj"
 	   	   2 "Spakuj"
            3 "Zmień bieżącą ścieżkę"
@@ -29,21 +31,42 @@ OPCJEMENU=(1 "Wypakuj"
 
 function rozpakuj()
 {
+	#PLIKI=('find . -not -path '*/\.*' -type f')
+
+	readarray -d '' PLIKI < <(find . -not -path '*/\.*' -type f -print0) #zeby nie szukalo w innych folderach
+
+	IT=1
+	SPIS=()
+
+	for i in "${PLIKI[@]}"
+	do
+		SPIS+=($IT "$i")
+		IT=$((IT+1))
+	done
+
+	#clear
+	#echo "${SPIS[@]}"
+	#sleep 10
+
+	dialog --title "Wybierz plik na którym chcesz operować (spacją)" --backtitle "tytul" \
+	--menu "menu" 0 0 0 "${SPIS[@]}"
+
+	#sprawdzenie rozszerzenia
+
 	dialog --title "Co chcesz zrobić?" \
 	--menu "Wybierz:" 0 0 0 \
-	1 "Zwykle rozpakowanie" \
-	2 "CI" \
-	3 "ddd" \
-	4 "{ch[6]}" 2>"${INPUT2}"
+	"1" "Wypakować" \
+	"2" "Wyświetlić zawartość" \
+	"3" "Wyświetlić komentarz archiwum" 2>"${INPUT2}"
 }
 
 
 function zmien_sciezke()
 {
-	dialog --title "Jestes w ${PWD}" --backtitle "Podaj ścieżkę" \
+	dialog --title "Jestes w $PWD" --backtitle "Podaj ścieżkę" \
 	--inputbox "Podaj docelową scieżkę" 0 0 2>"${INPUT2}"
 
-	if [ $? -eq 1 ]; then
+	if [ $? -eq 1 ]; then #jesli kliknieto anuluj
 		return;
 	fi
 
@@ -51,7 +74,7 @@ function zmien_sciezke()
 
 	cd $FOLDER
 
-	return $FOLDER
+	return $FOLDER #!!!!
 }
 
 function wyswietl_folder()
@@ -77,7 +100,7 @@ while true; do
 			zmien_sciezke #zrobione
 			;;
 		4)
-			ZAWARTOSC=$(ls) #zrobione
+			ZAWARTOSC=$(ls) #zrobione #do zrobienia rozmiary 
 			dialog --msgbox "$ZAWARTOSC" 0 0
 			;;
 		*)
